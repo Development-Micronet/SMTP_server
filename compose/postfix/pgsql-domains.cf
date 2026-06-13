@@ -1,0 +1,5 @@
+hosts = postgres
+user = __SQL_RO_USER__
+password = __SQL_RO_PASSWORD__
+dbname = __POSTGRES_DB__
+query = SELECT 1 FROM accounts_domain WHERE name = '%s' AND active

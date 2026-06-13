@@ -1,0 +1,109 @@
+{% extends "webmail/base.html" %}
+{% block title %}Admin – Email Accounts{% endblock %}
+{% block content %}
+<div class="content-header">
+  <div class="folder-title">
+    <i class="bi bi-person-workspace folder-icon"></i>
+    <h1>Admin Panel: Email Accounts (Mailboxes)</h1>
+  </div>
+  
+  <div class="pagination-controls">
+    <span class="page-info">
+      page <strong>{{ page.number }}</strong> of {{ page.paginator.num_pages }}
+    </span>
+    <div class="pagination-buttons">
+      {% if page.has_previous %}
+        <a href="?page={{ page.previous_page_number }}" class="btn-pagination" title="Previous page">
+          <i class="bi bi-chevron-left"></i>
+        </a>
+      {% else %}
+        <span class="btn-pagination disabled"><i class="bi bi-chevron-left"></i></span>
+      {% endif %}
+      
+      {% if page.has_next %}
+        <a href="?page={{ page.next_page_number }}" class="btn-pagination" title="Next page">
+          <i class="bi bi-chevron-right"></i>
+        </a>
+      {% else %}
+        <span class="btn-pagination disabled"><i class="bi bi-chevron-right"></i></span>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<div class="compose-card" style="border-bottom: 1px solid var(--color-border); padding-bottom: 2rem;">
+  <h3 style="font-size: 1.1rem; margin-bottom: 1rem; font-weight: 600;">Create New Email Account (Mailbox)</h3>
+  <form method="post" action="{% url 'admin_panel:mailbox_create' %}" class="compose-form" style="max-width: 600px; display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+    {% csrf_token %}
+    
+    <div class="form-group" style="grid-column: span 2;">
+      <label for="id_address">Email Address</label>
+      <input type="email" id="id_address" name="address" required placeholder="user@yourdomain.com" class="form-control">
+    </div>
+    
+    <div class="form-group">
+      <label for="id_password">Password</label>
+      <input type="password" id="id_password" name="password" required placeholder="Choose account password" class="form-control">
+    </div>
+    
+    <div class="form-group">
+      <label for="id_quota">Quota (MB)</label>
+      <input type="number" id="id_quota" name="quota_mb" value="2048" required class="form-control">
+    </div>
+    
+    <div style="grid-column: span 2; margin-top: 0.5rem;">
+      <button class="btn btn-primary btn-send" type="submit" style="padding: 0.65rem 1.25rem;">
+        <i class="bi bi-person-plus"></i>
+        <span>Create Account</span>
+      </button>
+    </div>
+  </form>
+</div>
+
+<div class="mail-list-container" style="padding: 1.5rem; overflow-x: auto;">
+  <h3 style="font-size: 1.1rem; margin-bottom: 1rem; font-weight: 600;">Active Email Accounts</h3>
+  <table class="admin-table">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Email ID</th>
+        <th>Owner User</th>
+        <th>Quota (MB)</th>
+        <th>Status</th>
+        <th>Created At</th>
+        <th style="text-align: center;">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for mb in page.object_list %}
+      <tr>
+        <td>{{ mb.id }}</td>
+        <td><strong class="mono" style="font-size: 0.95rem; color: var(--color-primary);">{{ mb.address }}</strong></td>
+        <td><code class="mono" style="font-size: 0.85rem;">{{ mb.user.username }}</code></td>
+        <td>{{ mb.quota_mb }} MB</td>
+        <td>
+          {% if mb.active %}
+            <span class="badge" style="background-color: #e6f4ea; color: #137333; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.8rem; font-weight: 600;">Active</span>
+          {% else %}
+            <span class="badge" style="background-color: #f1f3f4; color: var(--color-text-muted); padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.8rem; font-weight: 600;">Suspended</span>
+          {% endif %}
+        </td>
+        <td><small class="muted">{{ mb.created_at|date:"Y-m-d H:i" }}</small></td>
+        <td style="text-align: center;">
+          <a href="{% url 'admin_panel:mailbox_delete' mb.id %}" class="btn-link danger" onclick="return confirm('Are you sure you want to delete account {{ mb.address }} permanently? (This deletes all inbox index metadata)');">
+            <i class="bi bi-trash"></i> Delete Account
+          </a>
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="7" style="text-align: center; padding: 3rem; color: var(--color-text-muted);">
+          <i class="bi bi-person-exclamation" style="font-size: 2.5rem; display: block; margin-bottom: 1rem; color: #dadce0;"></i>
+          No email accounts created yet.
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

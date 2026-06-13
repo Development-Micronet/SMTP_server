@@ -1,0 +1,47 @@
+{% extends "webmail/base.html" %}
+{% block title %}Sign In{% endblock %}
+{% block content %}
+<div class="auth-card-wrapper">
+  <div class="auth-logo-brand">
+    <i class="bi bi-envelope-paper-fill brand-icon"></i>
+    <h2>MailStack</h2>
+    <p>Sign in to access your secure self-hosted mailbox</p>
+  </div>
+  
+  <form method="post" class="auth-form-control">
+    {% csrf_token %}
+    
+    {% if form.errors %}
+      <div class="alert alert-danger">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        <span>Invalid email address or password. Please try again.</span>
+      </div>
+    {% endif %}
+    
+    <div class="form-group">
+      <label for="id_username">
+        <i class="bi bi-envelope"></i>
+        <span>Email Address</span>
+      </label>
+      {{ form.username }}
+    </div>
+    
+    <div class="form-group">
+      <label for="id_password">
+        <i class="bi bi-lock"></i>
+        <span>Password</span>
+      </label>
+      {{ form.password }}
+    </div>
+    
+    <button class="btn btn-primary btn-auth-submit" type="submit">
+      <span>Sign In</span>
+      <i class="bi bi-arrow-right-short"></i>
+    </button>
+  </form>
+  
+  <div class="auth-card-footer">
+    <p>© 2026 MailStack. All rights reserved.</p>
+  </div>
+</div>
+{% endblock %}

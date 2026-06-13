@@ -1,0 +1,111 @@
+{% extends "webmail/base.html" %}
+{% block title %}Admin – Aliases{% endblock %}
+{% block content %}
+<div class="content-header">
+  <div class="folder-title">
+    <i class="bi bi-arrow-merge folder-icon"></i>
+    <h1>Admin Panel: Email Aliases</h1>
+  </div>
+  
+  <div class="pagination-controls">
+    <span class="page-info">
+      page <strong>{{ page.number }}</strong> of {{ page.paginator.num_pages }}
+    </span>
+    <div class="pagination-buttons">
+      {% if page.has_previous %}
+        <a href="?page={{ page.previous_page_number }}" class="btn-pagination" title="Previous page">
+          <i class="bi bi-chevron-left"></i>
+        </a>
+      {% else %}
+        <span class="btn-pagination disabled"><i class="bi bi-chevron-left"></i></span>
+      {% endif %}
+      
+      {% if page.has_next %}
+        <a href="?page={{ page.next_page_number }}" class="btn-pagination" title="Next page">
+          <i class="bi bi-chevron-right"></i>
+        </a>
+      {% else %}
+        <span class="btn-pagination disabled"><i class="bi bi-chevron-right"></i></span>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<div class="compose-card" style="border-bottom: 1px solid var(--color-border); padding-bottom: 2rem;">
+  <h3 style="font-size: 1.1rem; margin-bottom: 1rem; font-weight: 600;">Create Email Alias</h3>
+  <form method="post" action="{% url 'admin_panel:alias_create' %}" class="compose-form" style="max-width: 600px; display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+    {% csrf_token %}
+    
+    <div class="form-group">
+      <label for="id_source">Source Username (Left side of @)</label>
+      <input type="text" id="id_source" name="source" placeholder="e.g. contact (leave blank for catch-all)" class="form-control">
+    </div>
+    
+    <div class="form-group">
+      <label for="id_domain">Domain</label>
+      <select id="id_domain" name="domain" required class="form-control" style="width: 100%; height: 42px;">
+        {% for dom in domains %}
+          <option value="{{ dom.id }}">{{ dom.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    
+    <div class="form-group" style="grid-column: span 2;">
+      <label for="id_destination">Destination Email (Where to forward to)</label>
+      <input type="email" id="id_destination" name="destination" required placeholder="destination@example.com" class="form-control">
+    </div>
+    
+    <div style="grid-column: span 2; margin-top: 0.5rem;">
+      <button class="btn btn-primary btn-send" type="submit" style="padding: 0.65rem 1.25rem;">
+        <i class="bi bi-plus-square"></i>
+        <span>Create Alias</span>
+      </button>
+    </div>
+  </form>
+</div>
+
+<div class="mail-list-container" style="padding: 1.5rem; overflow-x: auto;">
+  <h3 style="font-size: 1.1rem; margin-bottom: 1rem; font-weight: 600;">Active Aliases / Forwards</h3>
+  <table class="admin-table">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Source Alias Address</th>
+        <th></th>
+        <th>Destination Address</th>
+        <th>Status</th>
+        <th style="text-align: center;">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for alias in page.object_list %}
+      <tr>
+        <td>{{ alias.id }}</td>
+        <td><strong class="mono" style="font-size: 0.95rem;">{% if alias.source %}{{ alias.source }}{% else %}*{% endif %}@{{ alias.domain.name }}</strong></td>
+        <td><i class="bi bi-arrow-right" style="color: var(--color-text-muted);"></i></td>
+        <td><code class="mono" style="font-size: 0.95rem; color: var(--color-primary);">{{ alias.destination }}</code></td>
+        <td>
+          {% if alias.active %}
+            <span class="badge" style="background-color: #e6f4ea; color: #137333; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.8rem; font-weight: 600;">Active</span>
+          {% else %}
+            <span class="badge" style="background-color: #fce8e6; color: #c5221f; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.8rem; font-weight: 600;">Disabled</span>
+          {% endif %}
+        </td>
+        <td style="text-align: center;">
+          <a href="{% url 'admin_panel:alias_delete' alias.id %}" class="btn-link danger" onclick="return confirm('Delete this forward alias rule?');">
+            <i class="bi bi-trash"></i> Delete Alias
+          </a>
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="6" style="text-align: center; padding: 3rem; color: var(--color-text-muted);">
+          <i class="bi bi-arrow-merge" style="font-size: 2.5rem; display: block; margin-bottom: 1rem; color: #dadce0;"></i>
+          No alias forwarding rules set yet.
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

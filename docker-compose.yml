@@ -1,0 +1,99 @@
+# MailStack — self-hosted mail platform (Django control plane + Postfix + Dovecot)
+# Copy .env.example to .env and edit before first run. See README.md.
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./ops/init-readonly-user.sql:/docker-entrypoint-initdb.d/10-readonly.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redisdata:/data
+
+  django:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    command: gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 3
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - .:/app
+      - vmail:/var/vmail:ro          # read-only; Dovecot owns the maildir
+      - static:/app/staticfiles
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_started }
+
+  celery:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    command: celery -A config worker -B -l info
+    volumes:
+      - .:/app
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_started }
+
+  postfix:
+    image: ghcr.io/docker-mailserver-org/postfix:3.8   # or build compose/postfix/Dockerfile
+    build: ./compose/postfix
+    restart: unless-stopped
+    hostname: ${MAIL_HOSTNAME}
+    ports:
+      - "25:25"     # inbound SMTP
+      - "587:587"   # submission (STARTTLS, SASL auth via Dovecot)
+    env_file: .env
+    volumes:
+      - ./compose/postfix:/etc/postfix/conf.d:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+      - postfix-queue:/var/spool/postfix
+    depends_on: [postgres, dovecot, rspamd]
+
+  dovecot:
+    build: ./compose/dovecot
+    restart: unless-stopped
+    hostname: ${MAIL_HOSTNAME}
+    ports:
+      - "993:993"   # IMAPS
+      - "143:143"   # IMAP+STARTTLS (optional; disable if you want IMAPS only)
+    env_file: .env
+    volumes:
+      - vmail:/var/vmail
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+    depends_on:
+      postgres: { condition: service_healthy }
+
+  rspamd:
+    image: rspamd/rspamd:latest
+    restart: unless-stopped
+    volumes:
+      - ./compose/rspamd/local.d:/etc/rspamd/local.d:ro
+      - rspamd-data:/var/lib/rspamd
+      - dkim-keys:/var/lib/rspamd/dkim
+    depends_on: [redis]
+
+volumes:
+  pgdata:
+  redisdata:
+  vmail:
+  static:
+  rspamd-data:
+  dkim-keys:
+  postfix-queue:

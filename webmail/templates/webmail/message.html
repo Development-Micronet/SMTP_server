@@ -1,0 +1,71 @@
+{% extends "webmail/base.html" %}
+{% block title %}{{ msg.subject|default:"(no subject)" }}{% endblock %}
+{% block content %}
+<div class="message-view-header">
+  <a href="{% url 'folder' folder=folder %}" class="btn-back">
+    <i class="bi bi-arrow-left"></i>
+    <span>Back to {{ folder }}</span>
+  </a>
+  
+  <div class="message-actions-top">
+    <form method="post" action="{% url 'message_delete' folder msg.uid %}" style="display:inline">
+      {% csrf_token %}
+      <button class="btn-action-icon danger" type="submit" title="Delete message">
+        <i class="bi bi-trash"></i>
+        <span>Delete</span>
+      </button>
+    </form>
+    <a class="btn-action-icon primary" href="{% url 'compose' %}?to={{ msg.from_|urlencode }}&subject=Re:%20{{ msg.subject|urlencode }}" title="Reply to sender">
+      <i class="bi bi-reply"></i>
+      <span>Reply</span>
+    </a>
+  </div>
+</div>
+
+<div class="message-card">
+  <div class="message-subject-line">
+    <h1>{{ msg.subject|default:"(no subject)" }}</h1>
+  </div>
+  
+  <div class="sender-info-card">
+    <div class="sender-avatar">
+      {{ msg.from_|slice:":1"|upper }}
+    </div>
+    <div class="sender-details">
+      <div class="sender-meta">
+        <span class="sender-name">{{ msg.from_ }}</span>
+        <span class="message-timestamp">{{ msg.date|date:"r" }}</span>
+      </div>
+      <div class="recipient-line">
+        <span class="muted">to:</span> {{ msg.to|join:", " }}
+      </div>
+    </div>
+  </div>
+  
+  <div class="message-body-container">
+    <pre class="message-body-text">{{ body }}</pre>
+  </div>
+  
+  {% if msg.attachments %}
+  <div class="attachments-section">
+    <h3>
+      <i class="bi bi-paperclip"></i>
+      <span>Attachments ({{ msg.attachments|length }})</span>
+    </h3>
+    <div class="attachments-grid">
+      {% for a in msg.attachments %}
+      <div class="attachment-card">
+        <div class="attachment-icon">
+          <i class="bi bi-file-earmark-arrow-down"></i>
+        </div>
+        <div class="attachment-meta">
+          <span class="attachment-name" title="{{ a.filename }}">{{ a.filename }}</span>
+          <span class="attachment-size">{{ a.size }} bytes</span>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

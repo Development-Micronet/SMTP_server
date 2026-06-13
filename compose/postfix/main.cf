@@ -1,0 +1,50 @@
+# MailStack Postfix — virtual mailboxes from the Django database, LMTP to Dovecot.
+compatibility_level = 3.8
+maillog_file = /dev/stdout
+
+myhostname = mail.example.com           # overridden at boot from MAIL_HOSTNAME
+# all mail domains are virtual
+mydestination =
+mynetworks = 127.0.0.0/8
+
+# --- Virtual domains/users from PostgreSQL (Django's tables) -------------
+virtual_mailbox_domains = pgsql:/etc/postfix/pgsql-domains.cf
+virtual_mailbox_maps    = pgsql:/etc/postfix/pgsql-mailbox.cf
+virtual_alias_maps      = pgsql:/etc/postfix/pgsql-alias.cf
+virtual_transport       = lmtp:inet:dovecot:24
+
+# --- TLS ------------------------------------------------------------------
+smtpd_tls_cert_file = /etc/letsencrypt/live/mail/fullchain.pem
+smtpd_tls_key_file = /etc/letsencrypt/live/mail/privkey.pem
+smtpd_tls_security_level = may
+smtp_tls_security_level  = may
+smtpd_tls_protocols = >=TLSv1.2
+smtpd_tls_loglevel = 1
+
+# --- SASL auth via Dovecot (used by the submission listener in master.cf) -
+smtpd_sasl_type = dovecot
+smtpd_sasl_path = inet:dovecot:12345
+smtpd_sasl_auth_enable = yes
+
+# --- Anti-abuse on port 25 -------------------------------------------------
+postscreen_greet_action = enforce
+smtpd_helo_required = yes
+smtpd_recipient_restrictions =
+    permit_mynetworks,
+    reject_unauth_destination,
+    reject_unknown_reverse_client_hostname
+smtpd_client_connection_rate_limit = 30
+# 50 MB limit
+message_size_limit = 52428800
+anvil_rate_time_unit = 60s
+
+# --- rspamd milter: spam scoring inbound, DKIM signing outbound -----------
+smtpd_milters = inet:rspamd:11332
+non_smtpd_milters = inet:rspamd:11332
+milter_default_action = accept
+
+# Allow specific SASL logins (like django system user) to send as any sender
+submission_sender_restrictions =
+    check_sasl_access texthash:/etc/postfix/sasl_access,
+    reject_sender_login_mismatch
+

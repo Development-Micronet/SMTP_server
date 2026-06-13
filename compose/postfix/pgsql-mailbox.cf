@@ -1,0 +1,7 @@
+hosts = postgres
+user = __SQL_RO_USER__
+password = __SQL_RO_PASSWORD__
+dbname = __POSTGRES_DB__
+query = SELECT m.local_part || '@' || d.name
+        FROM accounts_mailbox m JOIN accounts_domain d ON d.id = m.domain_id
+        WHERE m.local_part || '@' || d.name = '%s' AND m.active AND d.active

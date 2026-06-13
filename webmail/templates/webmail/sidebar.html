@@ -1,0 +1,92 @@
+{% load static %}
+{% if request.resolver_match.namespace == 'admin_panel' %}
+  <!-- Admin Panel Sidebar -->
+  <div class="sidebar-compose-container" style="display: flex; flex-direction: column; gap: 0.75rem;">
+    <a href="{% url 'compose' %}" class="btn-compose">
+      <i class="bi bi-pencil-square"></i>
+      <span>Compose</span>
+    </a>
+    <a href="{% url 'inbox' %}" class="btn-compose" style="background-color: var(--color-primary-soft); color: var(--color-primary); width: 100%; justify-content: center; box-shadow: none; border: 1px solid var(--color-primary);">
+      <i class="bi bi-arrow-left"></i>
+      <span>Back to Webmail</span>
+    </a>
+  </div>
+  <ul class="sidebar-list">
+    <li>
+      <a href="{% url 'admin_panel:email_list' %}" class="sidebar-item {% if request.resolver_match.url_name == 'email_list' or request.resolver_match.url_name == 'email_detail' %}active{% endif %}">
+        <i class="bi bi-envelope-check"></i>
+        <span>Tracked Emails</span>
+      </a>
+    </li>
+    <li>
+      <a href="{% url 'admin_panel:mailbox_list' %}" class="sidebar-item {% if request.resolver_match.url_name == 'mailbox_list' %}active{% endif %}">
+        <i class="bi bi-person-workspace"></i>
+        <span>Email Accounts</span>
+      </a>
+    </li>
+    <li>
+      <a href="{% url 'admin_panel:domain_list' %}" class="sidebar-item {% if request.resolver_match.url_name == 'domain_list' %}active{% endif %}">
+        <i class="bi bi-globe"></i>
+        <span>Domains</span>
+      </a>
+    </li>
+    <li>
+      <a href="{% url 'admin_panel:alias_list' %}" class="sidebar-item {% if request.resolver_match.url_name == 'alias_list' %}active{% endif %}">
+        <i class="bi bi-arrow-merge"></i>
+        <span>Aliases</span>
+      </a>
+    </li>
+  </ul>
+{% else %}
+  <!-- Webmail Sidebar -->
+  <div class="sidebar-compose-container">
+    <a href="{% url 'compose' %}" class="btn-compose">
+      <i class="bi bi-pencil-square"></i>
+      <span>Compose</span>
+    </a>
+  </div>
+  <ul class="sidebar-list">
+    <li>
+      <a href="{% url 'inbox' %}" class="sidebar-item {% if request.resolver_match.url_name == 'inbox' and not request.resolver_match.kwargs.folder %}active{% endif %}">
+        <i class="bi bi-inbox"></i>
+        <span>Inbox</span>
+      </a>
+    </li>
+    <li>
+      <a href="{% url 'folder' folder='Sent' %}" class="sidebar-item {% if request.resolver_match.kwargs.folder == 'Sent' %}active{% endif %}">
+        <i class="bi bi-send"></i>
+        <span>Sent</span>
+      </a>
+    </li>
+    <li>
+      <a href="{% url 'folder' folder='Drafts' %}" class="sidebar-item {% if request.resolver_match.kwargs.folder == 'Drafts' %}active{% endif %}">
+        <i class="bi bi-file-earmark-text"></i>
+        <span>Drafts</span>
+      </a>
+    </li>
+    <li>
+      <a href="{% url 'folder' folder='Spam' %}" class="sidebar-item {% if request.resolver_match.kwargs.folder == 'Spam' %}active{% endif %}">
+        <i class="bi bi-shield-exclamation"></i>
+        <span>Spam</span>
+      </a>
+    </li>
+    <li>
+      <a href="{% url 'folder' folder='Notifications' %}" class="sidebar-item {% if request.resolver_match.kwargs.folder == 'Notifications' %}active{% endif %}">
+        <i class="bi bi-bell"></i>
+        <span>Notifications</span>
+      </a>
+    </li>
+    <li>
+      <a href="{% url 'folder' folder='Social' %}" class="sidebar-item {% if request.resolver_match.kwargs.folder == 'Social' %}active{% endif %}">
+        <i class="bi bi-people"></i>
+        <span>Social</span>
+      </a>
+    </li>
+    <li>
+      <a href="{% url 'folder' folder='All' %}" class="sidebar-item {% if request.resolver_match.kwargs.folder == 'All' %}active{% endif %}">
+        <i class="bi bi-envelope-open"></i>
+        <span>All Mail</span>
+      </a>
+    </li>
+  </ul>
+{% endif %}

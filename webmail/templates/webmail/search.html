@@ -1,0 +1,62 @@
+{% extends "webmail/base.html" %}
+{% block title %}Search Results{% endblock %}
+{% block content %}
+<div class="content-header">
+  <div class="folder-title">
+    <i class="bi bi-search folder-icon"></i>
+    <h1>Search Results</h1>
+  </div>
+</div>
+
+<div class="search-page-box">
+  <form method="get" class="search-form-page">
+    <div class="search-input-wrapper">
+      <i class="bi bi-search page-search-icon"></i>
+      <input type="text" name="q" value="{{ q }}" placeholder="Search sender, subject or body content..." autofocus class="form-control">
+    </div>
+    <button class="btn btn-primary" type="submit">Search</button>
+  </form>
+</div>
+
+{% if q %}
+  <div class="search-info-bar">
+    Showing results matching <strong>"{{ q }}"</strong>
+  </div>
+  
+  {% if results %}
+  <div class="mail-list-container">
+    {% for m in results %}
+    <div class="mail-item-row {% if not m.seen %}unread{% endif %}">
+      <div class="mail-item-col action-cols">
+        <input type="checkbox" class="mail-checkbox" aria-label="Select message">
+        <button class="star-btn" aria-label="Star message">
+          <i class="bi bi-star star-icon"></i>
+        </button>
+      </div>
+      
+      <a href="{% url 'message' m.folder m.uid %}" class="mail-item-link">
+        <div class="mail-from" title="{{ m.from_addr }}">
+          {{ m.from_addr }}
+        </div>
+        <div class="mail-details">
+          <span class="mail-subject">{{ m.subject|default:"(no subject)" }}</span>
+          <span class="mail-snippet">— {{ m.snippet|truncatechars:80 }}</span>
+        </div>
+        <time class="mail-date">
+          {{ m.date|date:"j M Y" }}
+        </time>
+      </a>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <div class="empty-icon-wrap">
+      <i class="bi bi-search"></i>
+    </div>
+    <h3>No messages found</h3>
+    <p>No messages match "{{ q }}". Try checking for spelling errors or using simpler keywords.</p>
+  </div>
+  {% endif %}
+{% endif %}
+{% endblock %}

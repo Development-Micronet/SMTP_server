@@ -1,0 +1,9 @@
+hosts = postgres
+user = __SQL_RO_USER__
+password = __SQL_RO_PASSWORD__
+dbname = __POSTGRES_DB__
+# Exact alias first; '' source rows act as catch-all via second query if you
+# enable it (kept simple here: exact matches only).
+query = SELECT a.destination
+        FROM accounts_alias a JOIN accounts_domain d ON d.id = a.domain_id
+        WHERE a.source || '@' || d.name = '%s' AND a.active AND d.active

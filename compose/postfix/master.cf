@@ -1,0 +1,42 @@
+# service  type  private unpriv chroot wakeup maxproc command + args
+smtp       inet  n       -      n      -      1       postscreen
+smtpd      pass  -       -      n      -      -       smtpd
+dnsblog    unix  -       -      n      -      0       dnsblog
+tlsproxy   unix  -       -      n      -      0       tlsproxy
+
+# Submission: authenticated users only, TLS mandatory, sender must match login.
+submission inet  n       -      n      -      -       smtpd
+  -o syslog_name=postfix/submission
+  -o smtpd_tls_security_level=encrypt
+  -o smtpd_sasl_auth_enable=yes
+  -o smtpd_sender_login_maps=pgsql:/etc/postfix/pgsql-mailbox.cf
+  -o smtpd_sender_restrictions=$submission_sender_restrictions
+  -o smtpd_recipient_restrictions=permit_sasl_authenticated,reject
+  -o smtpd_client_connection_rate_limit=20
+  -o cleanup_service_name=cleanup
+
+cleanup    unix  n       -      n      -      0       cleanup
+pickup     unix  n       -      n      60     1       pickup
+qmgr       unix  n       -      n      300    1       qmgr
+tlsmgr     unix  -       -      n      1000?  1       tlsmgr
+rewrite    unix  -       -      n      -      -       trivial-rewrite
+bounce     unix  -       -      n      -      0       bounce
+defer      unix  -       -      n      -      0       bounce
+trace      unix  -       -      n      -      0       bounce
+verify     unix  -       -      n      -      1       verify
+flush      unix  n       -      n      1000?  0       flush
+proxymap   unix  -       -      n      -      -       proxymap
+smtp       unix  -       -      n      -      -       smtp
+relay      unix  -       -      n      -      -       smtp
+showq      unix  n       -      n      -      -       showq
+error      unix  -       -      n      -      -       error
+retry      unix  -       -      n      -      -       error
+discard    unix  -       -      n      -      -       discard
+local      unix  -       n      n      -      -       local
+virtual    unix  -       n      n      -      -       virtual
+lmtp       unix  -       -      n      -      -       lmtp
+anvil      unix  -       -      n      -      1       anvil
+scache     unix  -       -      n      -      1       scache
+
+# Postlog logging service required for Postfix 3.4+ integrity checks
+postlog    unix-dgram n  -      n      -      1       postlogd
