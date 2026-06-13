@@ -61,7 +61,7 @@
       <div class="thread-card-body">
         <div class="message-body-container">
           {% if item.html_body %}
-            <iframe class="email-body-iframe" srcdoc="{{ item.html_body }}" sandbox="allow-popups allow-popups-to-escape-sandbox" onload="resizeIframe(this)"></iframe>
+            <iframe class="email-body-iframe" srcdoc="{{ item.html_body }}" sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin" onload="resizeIframe(this)"></iframe>
           {% else %}
             <pre class="thread-message-content">{{ item.body|default:"(no plain-text body)" }}</pre>
           {% endif %}
@@ -91,37 +91,49 @@
       </div>
     </div>
   {% endfor %}
-</div>
 
-<!-- Quick Reply Section at the Bottom -->
-{% if last_msg %}
-<div class="quick-reply-container">
-  <h3>
-    <i class="bi bi-reply-fill"></i>
-    <span>Quick Reply</span>
-  </h3>
-  <form method="post" action="{% url 'compose' %}" enctype="multipart/form-data" class="quick-reply-form">
-    {% csrf_token %}
-    <input type="hidden" name="to" value="{{ last_msg.imap.from_ }}">
-    <input type="hidden" name="subject" value="Re: {{ cleaned_subject }}">
-    <input type="hidden" name="in_reply_to" value="{{ last_msg.meta.message_id }}">
-    
-    <div class="form-group">
-      <textarea name="body" class="form-control quick-reply-textarea" placeholder="Type your reply to {{ last_msg.imap.from_ }} here..." required></textarea>
-    </div>
-    
-    <div class="quick-reply-actions">
-      <button class="btn btn-primary btn-send" type="submit">
-        <i class="bi bi-send-fill"></i>
-        <span>Send Reply</span>
-      </button>
-      <a href="{% url 'compose' %}?to={{ last_msg.imap.from_|urlencode }}&subject=Re:%20{{ cleaned_subject|urlencode }}&in_reply_to={{ last_msg.meta.message_id|urlencode }}" class="btn-cancel" style="text-decoration: none;">
-        Open Full Editor
-      </a>
-    </div>
-  </form>
+  <!-- Gmail-style Reply/Forward placeholder at the end of scrollable list -->
+  {% if last_msg %}
+  <div class="reply-placeholder-container" id="replyPlaceholder">
+    <button class="btn-action-icon primary" onclick="showQuickReply()">
+      <i class="bi bi-reply-fill"></i>
+      <span>Reply</span>
+    </button>
+    <a href="{% url 'compose' %}?to={{ last_msg.imap.from_|urlencode }}&subject=Re:%20{{ cleaned_subject|urlencode }}&in_reply_to={{ last_msg.meta.message_id|urlencode }}" class="btn-action-icon" style="text-decoration: none;">
+      <i class="bi bi-arrow-right-short"></i>
+      <span>Forward</span>
+    </a>
+  </div>
+
+  <!-- Quick Reply Section at the Bottom (hidden by default) -->
+  <div class="quick-reply-container" id="quickReplyFormContainer" style="display: none; margin: 1rem 0.5rem 0 0.5rem;">
+    <h3>
+      <i class="bi bi-reply-fill"></i>
+      <span>Quick Reply</span>
+    </h3>
+    <form method="post" action="{% url 'compose' %}" enctype="multipart/form-data" class="quick-reply-form">
+      {% csrf_token %}
+      <input type="hidden" name="to" value="{{ last_msg.imap.from_ }}">
+      <input type="hidden" name="subject" value="Re: {{ cleaned_subject }}">
+      <input type="hidden" name="in_reply_to" value="{{ last_msg.meta.message_id }}">
+      
+      <div class="form-group">
+        <textarea name="body" class="form-control quick-reply-textarea" placeholder="Type your reply to {{ last_msg.imap.from_ }} here..." required></textarea>
+      </div>
+      
+      <div class="quick-reply-actions">
+        <button class="btn btn-primary btn-send" type="submit">
+          <i class="bi bi-send-fill"></i>
+          <span>Send Reply</span>
+        </button>
+        <a href="{% url 'compose' %}?to={{ last_msg.imap.from_|urlencode }}&subject=Re:%20{{ cleaned_subject|urlencode }}&in_reply_to={{ last_msg.meta.message_id|urlencode }}" class="btn-cancel" style="text-decoration: none;">
+          Open Full Editor
+        </a>
+      </div>
+    </form>
+  </div>
+  {% endif %}
 </div>
-{% endif %}
 
 <script>
   function toggleCard(header) {
@@ -139,16 +151,40 @@
     }
   }
 
+  function showQuickReply() {
+    document.getElementById('replyPlaceholder').style.display = 'none';
+    const formContainer = document.getElementById('quickReplyFormContainer');
+    formContainer.style.display = 'block';
+    
+    // Focus the textarea
+    formContainer.querySelector('.quick-reply-textarea').focus();
+    
+    // Scroll the form into view inside the thread container
+    setTimeout(() => {
+      formContainer.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    }, 100);
+  }
+
   function resizeIframe(iframe) {
     setTimeout(() => {
       try {
         if (iframe.contentWindow && iframe.contentWindow.document.body) {
-          iframe.style.height = (iframe.contentWindow.document.documentElement.scrollHeight || iframe.contentWindow.document.body.scrollHeight || 200) + 'px';
+          const body = iframe.contentWindow.document.body;
+          const html = iframe.contentWindow.document.documentElement;
+          const height = Math.max(
+            body.scrollHeight,
+            body.offsetHeight,
+            html.clientHeight,
+            html.scrollHeight,
+            html.offsetHeight
+          );
+          iframe.style.height = (height + 20) + 'px';
         }
       } catch (e) {
+        console.error("Iframe resize failed", e);
         iframe.style.height = '500px';
       }
-    }, 150);
+    }, 200);
   }
 </script>
 {% endblock %}

@@ -250,7 +250,7 @@ def message_detail(request, folder: str, uid: int):
                 "meta": tm,
                 "imap": imap_msg,
                 "body": imap_msg.text or "",
-                "html_body": imap_msg.html or "",
+                "html_body": ("<base target=\"_blank\">" + imap_msg.html) if imap_msg.html else "",
                 "is_target": (tm.folder == folder and tm.uid == uid),
                 "sender_name": sender_name,
                 "sender_email": addr,
