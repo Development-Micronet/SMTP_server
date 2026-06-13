@@ -60,7 +60,11 @@
       <!-- Card Body (Full Message Details) -->
       <div class="thread-card-body">
         <div class="message-body-container">
-          <pre class="thread-message-content">{{ item.body }}</pre>
+          {% if item.html_body %}
+            <iframe class="email-body-iframe" srcdoc="{{ item.html_body }}" sandbox="allow-popups allow-popups-to-escape-sandbox" onload="resizeIframe(this)"></iframe>
+          {% else %}
+            <pre class="thread-message-content">{{ item.body|default:"(no plain-text body)" }}</pre>
+          {% endif %}
         </div>
 
         {% if item.imap.attachments %}
@@ -125,10 +129,26 @@
     if (card.classList.contains('collapsed')) {
       card.classList.remove('collapsed');
       card.classList.add('expanded');
+      // Recalculate heights of any iframes inside this card when expanded
+      card.querySelectorAll('.email-body-iframe').forEach(iframe => {
+        resizeIframe(iframe);
+      });
     } else {
       card.classList.remove('expanded');
       card.classList.add('collapsed');
     }
+  }
+
+  function resizeIframe(iframe) {
+    setTimeout(() => {
+      try {
+        if (iframe.contentWindow && iframe.contentWindow.document.body) {
+          iframe.style.height = (iframe.contentWindow.document.documentElement.scrollHeight || iframe.contentWindow.document.body.scrollHeight || 200) + 'px';
+        }
+      } catch (e) {
+        iframe.style.height = '500px';
+      }
+    }, 150);
   }
 </script>
 {% endblock %}

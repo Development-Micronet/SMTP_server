@@ -249,7 +249,8 @@ def message_detail(request, folder: str, uid: int):
             messages_in_thread.append({
                 "meta": tm,
                 "imap": imap_msg,
-                "body": imap_msg.text or "(no plain-text body)",
+                "body": imap_msg.text or "",
+                "html_body": imap_msg.html or "",
                 "is_target": (tm.folder == folder and tm.uid == uid),
                 "sender_name": sender_name,
                 "sender_email": addr,

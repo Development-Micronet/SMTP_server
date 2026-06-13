@@ -1333,3 +1333,11 @@ body {
   align-items: center;
   gap: 1rem;
 }
+
+.email-body-iframe {
+  width: 100%;
+  border: none;
+  overflow: hidden;
+  min-height: 200px;
+  background-color: transparent;
+}
