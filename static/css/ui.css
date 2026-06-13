@@ -1097,3 +1097,214 @@ body {
 }
 
 
+/* Conversation Thread styles */
+.thread-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1.5rem;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.thread-subject-header {
+  padding: 1rem 1.5rem;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--color-text-main);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.thread-card {
+  border: 1px solid var(--color-border-dark);
+  border-radius: var(--radius-md);
+  background-color: var(--color-bg-card);
+  transition: var(--shadow-sm), border-color var(--transition-fast);
+  overflow: hidden;
+}
+
+.thread-card:hover {
+  border-color: #c0c4c9;
+  box-shadow: 0 1px 3px rgba(60,64,67,0.1);
+}
+
+.thread-card.expanded {
+  border-color: var(--color-primary);
+  box-shadow: 0 4px 12px rgba(26,115,232,0.08);
+}
+
+/* Header style - clickable to toggle */
+.thread-card-header {
+  padding: 0.85rem 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  cursor: pointer;
+  background-color: #fafbfc;
+  user-select: none;
+}
+
+.thread-card.expanded .thread-card-header {
+  background-color: #fff;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.thread-card-header .sender-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.95rem;
+  background-color: hsl(207, 73%, 88%);
+  color: hsl(207, 76%, 40%);
+  flex-shrink: 0;
+}
+
+.thread-card-header .sender-name {
+  width: 180px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--color-text-main);
+}
+
+.thread-card-header .subject-snippet {
+  flex: 1;
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 400;
+}
+
+.thread-card-header .timestamp {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Card Body */
+.thread-card-body {
+  padding: 1.25rem;
+  background-color: #fff;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* Collapsed state hiding details */
+.thread-card.collapsed .thread-card-body {
+  display: none;
+}
+
+.thread-card.expanded .thread-card-header .subject-snippet {
+  display: none; /* Hide snippet when expanded since full message is visible */
+}
+
+/* Expanded Card Sender Meta */
+.thread-card-body .sender-info-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 0;
+}
+
+.thread-card-body .sender-avatar-large {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1.2rem;
+  background-color: hsl(207, 73%, 88%);
+  color: hsl(207, 76%, 40%);
+  flex-shrink: 0;
+}
+
+.thread-card-body .sender-meta {
+  flex: 1;
+}
+
+.thread-card-body .sender-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.25rem;
+}
+
+.thread-card-body .sender-full-name {
+  font-weight: 600;
+  color: var(--color-text-main);
+  font-size: 0.95rem;
+}
+
+.thread-card-body .recipient-row {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
+/* Message Content Area */
+.thread-message-content {
+  font-family: inherit;
+  font-size: 0.95rem;
+  white-space: pre-wrap;
+  line-height: 1.6;
+  color: #222;
+  padding: 0 0.5rem;
+}
+
+/* Quick Reply Form Styling */
+.quick-reply-container {
+  margin: 1.5rem;
+  border: 1px solid var(--color-border-dark);
+  border-radius: var(--radius-md);
+  background-color: var(--color-bg-card);
+  padding: 1.25rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.quick-reply-container h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: var(--color-text-main);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.quick-reply-container h3 i {
+  color: var(--color-primary);
+}
+
+.quick-reply-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.quick-reply-textarea {
+  min-height: 120px !important;
+  resize: vertical;
+  border-color: var(--color-border-dark);
+}
+
+.quick-reply-textarea:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-soft);
+}
+
+.quick-reply-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
