@@ -1268,9 +1268,9 @@ body {
   display: none;
 }
 
-.thread-count {
+.mail-from .thread-count {
   font-size: 0.85em;
-  font-weight: normal;
+  font-weight: 500;
   color: var(--color-text-muted);
   margin-left: 0.35rem;
 }
