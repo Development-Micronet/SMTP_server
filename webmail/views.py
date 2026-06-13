@@ -159,7 +159,13 @@ def inbox(request, folder: str = "INBOX"):
 def _clean_subject(subject_str):
     if not subject_str:
         return ""
-    return re.sub(r'^(?i)\s*(?:re|fwd|fw|aw)\s*:\s*', '', subject_str).strip()
+    cleaned = subject_str.strip()
+    while True:
+        match = re.match(r'^(?:re|fwd|fw|aw)\s*:\s*', cleaned, re.IGNORECASE)
+        if not match:
+            break
+        cleaned = cleaned[match.end():].strip()
+    return cleaned
 
 
 @login_required

@@ -5,7 +5,13 @@ from django.db import migrations, models
 def _clean_subject(subject_str):
     if not subject_str:
         return ""
-    return re.sub(r'^(?i)\s*(?:re|fwd|fw|aw)\s*:\s*', '', subject_str).strip()
+    cleaned = subject_str.strip()
+    while True:
+        match = re.match(r'^(?:re|fwd|fw|aw)\s*:\s*', cleaned, re.IGNORECASE)
+        if not match:
+            break
+        cleaned = cleaned[match.end():].strip()
+    return cleaned
 
 def backfill_conversation_ids(apps, schema_editor):
     MessageMeta = apps.get_model('mail', 'MessageMeta')

@@ -61,7 +61,12 @@ def index_mailbox(self, mailbox_id: int, folder: str = "INBOX"):
                                 
                     # 3. Fallback: subject-based sibling match
                     if not conversation_id:
-                        subj_clean = re.sub(r'^(?i)\s*(?:re|fwd|fw|aw)\s*:\s*', '', m.subject or "").strip()
+                        subj_clean = (m.subject or "").strip()
+                        while True:
+                            match = re.match(r'^(?:re|fwd|fw|aw)\s*:\s*', subj_clean, re.IGNORECASE)
+                            if not match:
+                                break
+                            subj_clean = subj_clean[match.end():].strip()
                         if subj_clean:
                             sibling = MessageMeta.objects.filter(mailbox=mb, subject__icontains=subj_clean).first()
                             if sibling:
