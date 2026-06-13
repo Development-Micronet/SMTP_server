@@ -53,8 +53,19 @@ def inbox(request, folder: str = "INBOX"):
     except Exception:
         pass
 
-    qs = MessageMeta.objects.filter(mailbox=mb, folder=folder)
-    page = Paginator(qs, 50).get_page(request.GET.get("page"))
+    # Fetch latest 500 messages to group by conversation thread
+    qs = MessageMeta.objects.filter(mailbox=mb, folder=folder).order_by('-date')[:500]
+    metas = list(qs)
+    
+    seen_threads = set()
+    unique_threads = []
+    for m in metas:
+        subj_clean = _clean_subject(m.subject).lower()
+        if subj_clean not in seen_threads:
+            seen_threads.add(subj_clean)
+            unique_threads.append(m)
+
+    page = Paginator(unique_threads, 50).get_page(request.GET.get("page"))
     return render(request, "webmail/inbox.html",
                   {"mailbox": mb, "folder": folder, "page": page})
 
