@@ -12,7 +12,11 @@
   
   <div class="pagination-controls">
     <span class="page-info">
-      page <strong>{{ page.number }}</strong> of {{ page.paginator.num_pages }}
+      {% if page.paginator.count > 0 %}
+        <strong>{{ page.start_index }}-{{ page.end_index }}</strong> of <strong>{{ page.paginator.count }}</strong>
+      {% else %}
+        <strong>0-0</strong> of <strong>0</strong>
+      {% endif %}
     </span>
     <div class="pagination-buttons">
       {% if page.has_previous %}

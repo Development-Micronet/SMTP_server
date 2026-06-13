@@ -47,9 +47,12 @@
   </div>
   <ul class="sidebar-list">
     <li>
-      <a href="{% url 'inbox' %}" class="sidebar-item {% if request.resolver_match.url_name == 'inbox' and not request.resolver_match.kwargs.folder %}active{% endif %}">
+      <a href="{% url 'inbox' %}" class="sidebar-item {% if unread_counts.INBOX %}has-unread{% endif %} {% if request.resolver_match.url_name == 'inbox' and not request.resolver_match.kwargs.folder %}active{% endif %}">
         <i class="bi bi-inbox"></i>
         <span>Inbox</span>
+        {% if unread_counts.INBOX %}
+          <span class="badge unread-count">{{ unread_counts.INBOX }}</span>
+        {% endif %}
       </a>
     </li>
     <li>
@@ -62,24 +65,36 @@
       <a href="{% url 'folder' folder='Drafts' %}" class="sidebar-item {% if request.resolver_match.kwargs.folder == 'Drafts' %}active{% endif %}">
         <i class="bi bi-file-earmark-text"></i>
         <span>Drafts</span>
+        {% if drafts_count %}
+          <span class="badge drafts-count">{{ drafts_count }}</span>
+        {% endif %}
       </a>
     </li>
     <li>
-      <a href="{% url 'folder' folder='Spam' %}" class="sidebar-item {% if request.resolver_match.kwargs.folder == 'Spam' %}active{% endif %}">
+      <a href="{% url 'folder' folder='Spam' %}" class="sidebar-item {% if unread_counts.Spam %}has-unread{% endif %} {% if request.resolver_match.kwargs.folder == 'Spam' %}active{% endif %}">
         <i class="bi bi-shield-exclamation"></i>
         <span>Spam</span>
+        {% if unread_counts.Spam %}
+          <span class="badge unread-count">{{ unread_counts.Spam }}</span>
+        {% endif %}
       </a>
     </li>
     <li>
-      <a href="{% url 'folder' folder='Notifications' %}" class="sidebar-item {% if request.resolver_match.kwargs.folder == 'Notifications' %}active{% endif %}">
+      <a href="{% url 'folder' folder='Notifications' %}" class="sidebar-item {% if unread_counts.Notifications %}has-unread{% endif %} {% if request.resolver_match.kwargs.folder == 'Notifications' %}active{% endif %}">
         <i class="bi bi-bell"></i>
         <span>Notifications</span>
+        {% if unread_counts.Notifications %}
+          <span class="badge unread-count">{{ unread_counts.Notifications }}</span>
+        {% endif %}
       </a>
     </li>
     <li>
-      <a href="{% url 'folder' folder='Social' %}" class="sidebar-item {% if request.resolver_match.kwargs.folder == 'Social' %}active{% endif %}">
+      <a href="{% url 'folder' folder='Social' %}" class="sidebar-item {% if unread_counts.Social %}has-unread{% endif %} {% if request.resolver_match.kwargs.folder == 'Social' %}active{% endif %}">
         <i class="bi bi-people"></i>
         <span>Social</span>
+        {% if unread_counts.Social %}
+          <span class="badge unread-count">{{ unread_counts.Social }}</span>
+        {% endif %}
       </a>
     </li>
     <li>

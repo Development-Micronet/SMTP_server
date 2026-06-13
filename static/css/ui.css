@@ -302,6 +302,33 @@ body {
   font-weight: 600;
 }
 
+.sidebar-item.has-unread {
+  font-weight: 700;
+  color: var(--color-text-main);
+}
+
+.sidebar-item .badge {
+  margin-left: auto;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  background: transparent;
+  padding: 0 4px;
+}
+
+.sidebar-item.has-unread .badge {
+  font-weight: 700;
+  color: var(--color-text-main);
+}
+
+.sidebar-item.active .badge {
+  color: var(--color-primary);
+}
+
+.sidebar-item.active.has-unread .badge {
+  color: var(--color-primary);
+}
+
 /* Content Area */
 .app-content-wrapper {
   flex: 1;
