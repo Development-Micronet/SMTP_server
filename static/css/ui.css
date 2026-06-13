@@ -1121,6 +1121,7 @@ body {
   background-color: var(--color-bg-card);
   transition: var(--shadow-sm), border-color var(--transition-fast);
   overflow: hidden;
+  flex-shrink: 0;
 }
 
 .thread-card:hover {
