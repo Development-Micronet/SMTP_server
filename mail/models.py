@@ -15,6 +15,8 @@ class MessageMeta(models.Model):
     folder = models.CharField(max_length=255, default="INBOX")
     uid = models.PositiveIntegerField()
     message_id = models.CharField(max_length=998, blank=True, db_index=True)
+    conversation_id = models.CharField(max_length=255, blank=True, db_index=True)
+    in_reply_to = models.CharField(max_length=998, blank=True, db_index=True)
     subject = models.TextField(blank=True)
     from_addr = models.CharField(max_length=998, blank=True)
     to_addrs = models.TextField(blank=True)
