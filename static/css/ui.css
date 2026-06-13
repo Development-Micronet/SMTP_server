@@ -1147,23 +1147,41 @@ body {
 .thread-card.expanded .thread-card-header {
   background-color: #fff;
   border-bottom: 1px solid var(--color-border);
+  align-items: flex-start;
+  padding-top: 1.25rem;
+  padding-bottom: 1.25rem;
 }
 
 .thread-card-header .sender-avatar {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 600;
-  font-size: 0.95rem;
+  font-size: 1rem;
   background-color: hsl(207, 73%, 88%);
   color: hsl(207, 76%, 40%);
   flex-shrink: 0;
+  transition: var(--transition-fast);
 }
 
-.thread-card-header .sender-name {
+.thread-card.expanded .thread-card-header .sender-avatar {
+  width: 40px;
+  height: 40px;
+  font-size: 1.15rem;
+}
+
+.thread-card-header .collapsed-info-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.thread-card-header .collapsed-info-row .sender-name {
   width: 180px;
   font-weight: 600;
   font-size: 0.9rem;
@@ -1173,7 +1191,7 @@ body {
   color: var(--color-text-main);
 }
 
-.thread-card-header .subject-snippet {
+.thread-card-header .collapsed-info-row .subject-snippet {
   flex: 1;
   font-size: 0.9rem;
   color: var(--color-text-muted);
@@ -1181,6 +1199,51 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
   font-weight: 400;
+}
+
+.thread-card-header .expanded-info-row {
+  display: none;
+  flex: 1;
+  min-width: 0;
+}
+
+.thread-card.expanded .thread-card-header .collapsed-info-row {
+  display: none;
+}
+
+.thread-card.expanded .thread-card-header .expanded-info-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.sender-row-expanded {
+  display: flex;
+  flex-direction: column;
+}
+
+.sender-name-full {
+  font-weight: 600;
+  color: var(--color-text-main);
+  font-size: 0.95rem;
+}
+
+.thread-card-header .recipient-row {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
+.thread-card-header .header-right-meta {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-left: auto;
+  align-self: center;
+}
+
+.thread-card.expanded .thread-card-header .header-right-meta {
+  align-self: flex-start;
+  padding-top: 0.2rem;
 }
 
 .thread-card-header .timestamp {
@@ -1204,53 +1267,14 @@ body {
   display: none;
 }
 
-.thread-card.expanded .thread-card-header .subject-snippet {
-  display: none; /* Hide snippet when expanded since full message is visible */
-}
-
-/* Expanded Card Sender Meta */
-.thread-card-body .sender-info-card {
-  display: flex;
-  align-items: flex-start;
-  gap: 1rem;
-  margin-bottom: 0;
-}
-
-.thread-card-body .sender-avatar-large {
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  font-size: 1.2rem;
-  background-color: hsl(207, 73%, 88%);
-  color: hsl(207, 76%, 40%);
-  flex-shrink: 0;
-}
-
-.thread-card-body .sender-meta {
-  flex: 1;
-}
-
-.thread-card-body .sender-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.25rem;
-}
-
-.thread-card-body .sender-full-name {
-  font-weight: 600;
-  color: var(--color-text-main);
-  font-size: 0.95rem;
-}
-
-.thread-card-body .recipient-row {
-  font-size: 0.85rem;
+.thread-count {
+  font-size: 0.85em;
+  font-weight: normal;
   color: var(--color-text-muted);
+  margin-left: 0.35rem;
 }
+
+
 
 /* Message Content Area */
 .thread-message-content {

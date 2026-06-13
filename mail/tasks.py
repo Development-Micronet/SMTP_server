@@ -20,6 +20,8 @@ def index_all_mailboxes():
 
 @shared_task(bind=True, max_retries=3, default_retry_delay=60)
 def index_mailbox(self, mailbox_id: int, folder: str = "INBOX"):
+    import re
+    import uuid
     mb = Mailbox.objects.get(pk=mailbox_id)
     last_uid = (
         MessageMeta.objects.filter(mailbox=mb, folder=folder)
@@ -32,10 +34,49 @@ def index_mailbox(self, mailbox_id: int, folder: str = "INBOX"):
                 uid = int(m.uid)
                 if uid <= last_uid:  # IMAP returns the last message for n:* even if none are new
                     continue
+                
+                message_id = (m.headers.get("message-id", ("",))[0])[:998].strip()
+                in_reply_to = (m.headers.get("in-reply-to", ("",))[0])[:998].strip()
+                references_str = m.headers.get("references", ("",))[0]
+                
+                # Look up if this message already exists in database with conversation_id
+                existing = MessageMeta.objects.filter(mailbox=mb, folder=folder, uid=uid).first()
+                if existing and existing.conversation_id:
+                    conversation_id = existing.conversation_id
+                else:
+                    conversation_id = ""
+                    # 1. Try In-Reply-To
+                    if in_reply_to:
+                        parent = MessageMeta.objects.filter(mailbox=mb, message_id=in_reply_to).first()
+                        if parent:
+                            conversation_id = parent.conversation_id
+                            
+                    # 2. Try References list
+                    if not conversation_id and references_str:
+                        ref_ids = re.findall(r'<[^>]+>', references_str)
+                        if ref_ids:
+                            parent = MessageMeta.objects.filter(mailbox=mb, message_id__in=ref_ids).first()
+                            if parent:
+                                conversation_id = parent.conversation_id
+                                
+                    # 3. Fallback: subject-based sibling match
+                    if not conversation_id:
+                        subj_clean = re.sub(r'^(?i)\s*(?:re|fwd|fw|aw)\s*:\s*', '', m.subject or "").strip()
+                        if subj_clean:
+                            sibling = MessageMeta.objects.filter(mailbox=mb, subject__icontains=subj_clean).first()
+                            if sibling:
+                                conversation_id = sibling.conversation_id
+                                
+                    # 4. Generate new conversation UUID
+                    if not conversation_id:
+                        conversation_id = str(uuid.uuid4())
+                
                 MessageMeta.objects.update_or_create(
                     mailbox=mb, folder=folder, uid=uid,
                     defaults=dict(
-                        message_id=(m.headers.get("message-id", ("",))[0])[:998],
+                        message_id=message_id,
+                        in_reply_to=in_reply_to,
+                        conversation_id=conversation_id,
                         subject=m.subject or "",
                         from_addr=m.from_ or "",
                         to_addrs=", ".join(m.to),

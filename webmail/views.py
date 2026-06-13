@@ -1,6 +1,7 @@
 import re
 from collections import defaultdict
 from datetime import datetime
+from email.utils import parseaddr
 from django.conf import settings
 from django.contrib import messages as flash
 from django.contrib.auth.decorators import login_required
@@ -40,8 +41,45 @@ def _mailbox_or_404(request):
     return mb
 
 
+class ThreadInfo:
+    def __init__(self, latest_meta, count, senders_display, is_unread):
+        self.meta = latest_meta
+        self.thread_count = count
+        self.senders_display = senders_display
+        self.is_unread = is_unread
+        
+    @property
+    def id(self):
+        return self.meta.id
+        
+    @property
+    def uid(self):
+        return self.meta.uid
+        
+    @property
+    def subject(self):
+        return self.meta.subject
+        
+    @property
+    def date(self):
+        return self.meta.date
+        
+    @property
+    def snippet(self):
+        return self.meta.snippet
+        
+    @property
+    def from_addr(self):
+        return self.senders_display
+        
+    @property
+    def seen(self):
+        return not self.is_unread
+
+
 @login_required
 def inbox(request, folder: str = "INBOX"):
+    from django.db.models import Count
     mb = _mailbox_or_404(request)
     if mb is None:
         return redirect("admin_panel:email_list")
@@ -54,16 +92,64 @@ def inbox(request, folder: str = "INBOX"):
         pass
 
     # Fetch latest 500 messages to group by conversation thread
-    qs = MessageMeta.objects.filter(mailbox=mb, folder=folder).order_by('-date')[:500]
-    metas = list(qs)
+    metas = list(MessageMeta.objects.filter(mailbox=mb, folder=folder).order_by('-date')[:500])
     
-    seen_threads = set()
-    unique_threads = []
+    # Group by conversation_id (maintaining order of newest message)
+    conversation_groups = defaultdict(list)
+    conv_order = []
     for m in metas:
-        subj_clean = _clean_subject(m.subject).lower()
-        if subj_clean not in seen_threads:
-            seen_threads.add(subj_clean)
-            unique_threads.append(m)
+        c_id = m.conversation_id
+        if c_id not in conversation_groups:
+            conv_order.append(c_id)
+        conversation_groups[c_id].append(m)
+        
+    # Batch query the thread counts across all folders (to know total size of thread)
+    counts = {
+        r['conversation_id']: r['count']
+        for r in MessageMeta.objects.filter(mailbox=mb, conversation_id__in=conv_order)
+                                    .values('conversation_id')
+                                    .annotate(count=Count('id'))
+    }
+    
+    # Batch query all participants for these threads in chronological order
+    all_thread_metas = list(MessageMeta.objects.filter(
+        mailbox=mb, conversation_id__in=conv_order
+    ).order_by('date'))
+    
+    # Group senders by conversation_id
+    senders_map = defaultdict(list)
+    for tm in all_thread_metas:
+        c_id = tm.conversation_id
+        from_addr = tm.from_addr
+        name, addr = parseaddr(from_addr)
+        sender_name = name if name else (addr.split('@')[0] if '@' in addr else addr)
+        addr_lower = addr.lower()
+        mb_addr_lower = mb.address.lower()
+        mb_local_lower = mb.address.split('@')[0].lower()
+        if addr_lower == mb_addr_lower or sender_name.lower() == mb_local_lower:
+            sender_name = "me"
+        if sender_name not in senders_map[c_id]:
+            senders_map[c_id].append(sender_name)
+            
+    # Check if there is any unread message in the thread
+    unread_map = defaultdict(bool)
+    for tm in all_thread_metas:
+        if not tm.seen:
+            unread_map[tm.conversation_id] = True
+            
+    unique_threads = []
+    for c_id in conv_order:
+        group = conversation_groups[c_id]
+        latest_meta = group[0] # The latest meta in the current folder
+        
+        # Compile senders display (e.g. "nisha, me" or just "nisha")
+        sender_list = senders_map[c_id]
+        senders_display = ", ".join(sender_list) if sender_list else latest_meta.from_addr
+        
+        thread_count = counts.get(c_id, len(group))
+        is_unread = unread_map[c_id]
+        
+        unique_threads.append(ThreadInfo(latest_meta, thread_count, senders_display, is_unread))
 
     page = Paginator(unique_threads, 50).get_page(request.GET.get("page"))
     return render(request, "webmail/inbox.html",
@@ -96,21 +182,11 @@ def message_detail(request, folder: str, uid: int):
     if target_meta is None:
         raise Http404("Message not found in database metadata.")
         
-    # 2. Find all messages in the same thread (by matching cleaned subject)
-    cleaned = _clean_subject(target_meta.subject)
-    # Get candidates that have the cleaned subject in DB (very fast filter)
-    candidates = MessageMeta.objects.filter(mailbox=mb, subject__icontains=cleaned)
-    
-    # Filter candidate metas to strictly match only thread emails (exact or prefixed subject)
-    pattern = re.compile(rf'^(?:re|fwd|fw|aw)?\s*:\s*{re.escape(cleaned)}$', re.IGNORECASE)
-    thread_metas = []
-    for c in candidates:
-        c_subj = c.subject.strip()
-        if c_subj.lower() == cleaned.lower() or pattern.match(c_subj):
-            thread_metas.append(c)
-            
-    # Sort chronologically (oldest first)
-    thread_metas.sort(key=lambda x: x.date if x.date else datetime.min)
+    # 2. Find all messages in the same conversation thread (by conversation_id)
+    thread_metas = list(MessageMeta.objects.filter(
+        mailbox=mb, 
+        conversation_id=target_meta.conversation_id
+    ).order_by('date'))
     
     # 3. Group thread metas by folder to batch fetch from IMAP
     folder_groups = defaultdict(list)
@@ -148,11 +224,31 @@ def message_detail(request, folder: str, uid: int):
     for tm in thread_metas:
         imap_msg = fetched_messages.get((tm.folder, tm.uid))
         if imap_msg:
+            from_header = imap_msg.from_
+            name, addr = parseaddr(from_header)
+            sender_name = name if name else (addr.split('@')[0] if '@' in addr else addr)
+            addr_lower = addr.lower()
+            mb_addr_lower = mb.address.lower()
+            mb_local_lower = mb.address.split('@')[0].lower()
+            if addr_lower == mb_addr_lower or sender_name.lower() == mb_local_lower:
+                sender_name = "me"
+            sender_initial = sender_name[0].upper() if sender_name else "M"
+            
+            to_list = imap_msg.to
+            formatted_to = []
+            for t in to_list:
+                t_name, t_addr = parseaddr(t)
+                formatted_to.append(t_name if t_name else t_addr)
+                
             messages_in_thread.append({
                 "meta": tm,
                 "imap": imap_msg,
                 "body": imap_msg.text or "(no plain-text body)",
                 "is_target": (tm.folder == folder and tm.uid == uid),
+                "sender_name": sender_name,
+                "sender_email": addr,
+                "sender_initial": sender_initial,
+                "formatted_to": ", ".join(formatted_to),
             })
             
     # Update target message seen state locally in DB
@@ -160,6 +256,7 @@ def message_detail(request, folder: str, uid: int):
     
     # Prepare details of the last message in thread (for pre-filling quick reply details)
     last_msg = messages_in_thread[-1] if messages_in_thread else None
+    cleaned = _clean_subject(target_meta.subject)
     
     return render(request, "webmail/message.html", {
         "mailbox": mb,
@@ -200,11 +297,28 @@ def compose(request):
                 flash.error(request, f"{f.name} exceeds the attachment size limit.")
                 return redirect("compose")
             attachments.append((f.name, f.read(), f.content_type or "application/octet-stream"))
+            
+        in_reply_to = request.POST.get("in_reply_to", "").strip()
+        references = request.POST.get("references", "").strip()
+        
+        if in_reply_to and not references:
+            parent = MessageMeta.objects.filter(mailbox=mb, message_id=in_reply_to).first()
+            if parent:
+                siblings = MessageMeta.objects.filter(mailbox=mb, conversation_id=parent.conversation_id).order_by('date')
+                msg_ids = [s.message_id for s in siblings if s.message_id]
+                unique_ids = []
+                for mid in msg_ids:
+                    if mid not in unique_ids:
+                        unique_ids.append(mid)
+                references = " ".join(unique_ids)
+
         msg = build_message(
             from_addr=mb.address, to=to,
             subject=request.POST.get("subject", ""),
             body=request.POST.get("body", ""),
             attachments=attachments,
+            in_reply_to=in_reply_to,
+            references=references,
         )
         send(msg)
         
@@ -228,6 +342,7 @@ def compose(request):
         "mailbox": mb,
         "to": request.GET.get("to", ""),
         "subject": request.GET.get("subject", ""),
+        "in_reply_to": request.GET.get("in_reply_to", ""),
     })
 
 

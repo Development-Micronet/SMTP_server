@@ -13,6 +13,8 @@ def build_message(
     body: str,
     cc: list[str] | None = None,
     attachments: list[tuple[str, bytes, str]] | None = None,  # (filename, data, mime)
+    in_reply_to: str | None = None,
+    references: str | None = None,
 ) -> EmailMessage:
     msg = EmailMessage()
     msg["From"] = from_addr
@@ -22,6 +24,10 @@ def build_message(
     msg["Subject"] = subject
     msg["Date"] = formatdate(localtime=True)
     msg["Message-ID"] = make_msgid(domain=from_addr.split("@", 1)[1])
+    if in_reply_to:
+        msg["In-Reply-To"] = in_reply_to
+    if references:
+        msg["References"] = references
     msg.set_content(body)
     for filename, data, mime in attachments or []:
         maintype, _, subtype = mime.partition("/")

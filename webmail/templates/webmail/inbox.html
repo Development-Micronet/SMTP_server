@@ -50,7 +50,12 @@
         {{ m.from_addr }}
       </div>
       <div class="mail-details">
-        <span class="mail-subject">{{ m.subject|default:"(no subject)" }}</span>
+        <span class="mail-subject">
+          {{ m.subject|default:"(no subject)" }}
+          {% if m.thread_count > 1 %}
+            <span class="thread-count">({{ m.thread_count }})</span>
+          {% endif %}
+        </span>
         <span class="mail-snippet">— {{ m.snippet|truncatechars:80 }}</span>
       </div>
       <time class="mail-date" datetime="{{ m.date|date:'c' }}">

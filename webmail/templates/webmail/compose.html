@@ -11,6 +11,7 @@
 <div class="compose-card">
   <form method="post" enctype="multipart/form-data" class="compose-form">
     {% csrf_token %}
+    <input type="hidden" name="in_reply_to" value="{{ in_reply_to }}">
     
     <div class="form-group row-group">
       <label for="fromAddress">From</label>
